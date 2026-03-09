@@ -1,0 +1,42 @@
+{
+  "name": "x-over",
+  "displayName": "Crossover References",
+  "description": "Cross-reference between corresponding type definitions in different programming languages",
+  "version": "0.0.1",
+  "publisher": "xq-Tec",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xq-tec/x-over"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/cross-reference.json"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {},
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "npm run compile && vsce package",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.2.1",
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^2.3.9",
+    "glob": "^10.0.0",
+    "mocha": "^10.2.0",
+    "typescript": "^5.3.0"
+  }
+}

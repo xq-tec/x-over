@@ -1,0 +1,29 @@
+{
+  "description": "This file is used by the Crossover References extension (https://marketplace.visualstudio.com/items?itemName=xq-Tec.x-over) to map symbols between corresponding definitions in separate components of a project, typically in different programming languages. Keep this file in sync with the definitions of the listed symbols.",
+  "mappings": [
+    {
+      "@rust": {
+        "file": "rust/src/types.rs",
+        "symbol": "User"
+      },
+      "@ts": {
+        "file": "typescript/src/types.ts",
+        "symbol": "UserData"
+      },
+      "children": [
+        {
+          "@rust": "id",
+          "@ts": "id"
+        },
+        {
+          "@rust": "name",
+          "@ts": "name"
+        },
+        {
+          "@rust": "company_email",
+          "@ts": "companyEmail"
+        }
+      ]
+    }
+  ]
+}
