@@ -18,7 +18,7 @@ function key(configUri: string, component: string, symbolPath: string): string {
   return `${configUri}|${component}|${symbolPath}`;
 }
 
-export class MappingIndex {
+export class MappingIndex implements vscode.Disposable {
   private counterpartMap = new Map<string, vscode.Location[]>();
   private fileToConfig = new Map<string, { configUri: vscode.Uri; component: string }>();
   private symbolCache = new Map<string, SymbolMap>();
@@ -26,6 +26,7 @@ export class MappingIndex {
   private configs: ParsedConfig[] = [];
   private invalidated = true;
   private rebuildPromise: Promise<void> | null = null;
+  private retryDisposable: vscode.Disposable | null = null;
 
   private throwIfCancelled(token?: vscode.CancellationToken): void {
     if (token?.isCancellationRequested) {
@@ -37,6 +38,7 @@ export class MappingIndex {
   async rebuild(token?: vscode.CancellationToken): Promise<void> {
     this.throwIfCancelled(token);
     this.invalidated = false;
+    let hadEmptySymbols = false;
     this.counterpartMap.clear();
     this.fileToConfig.clear();
     this.symbolCache.clear();
@@ -98,6 +100,7 @@ export class MappingIndex {
           if (symbolMap === undefined) {
             this.throwIfCancelled(token);
             symbolMap = await resolveSymbolsInFile(fileUri);
+            if (symbolMap.size === 0) hadEmptySymbols = true;
             this.symbolCache.set(fileStr, symbolMap);
           }
 
@@ -171,6 +174,20 @@ export class MappingIndex {
         }
       }
     }
+
+    const incomplete =
+      hadEmptySymbols &&
+      this.counterpartMap.size === 0 &&
+      this.fileToConfig.size >= 2;
+    if (incomplete) {
+      this.invalidate();
+      this.retryDisposable?.dispose();
+      this.retryDisposable = vscode.languages.onDidChangeDiagnostics(() => {
+        this.retryDisposable?.dispose();
+        this.retryDisposable = null;
+        this.invalidate();
+      });
+    }
   }
 
   invalidate(): void {
@@ -201,6 +218,11 @@ export class MappingIndex {
   ): vscode.Location[] {
     const k = key(configUri.toString(), component, symbolPath);
     return this.counterpartMap.get(k) ?? [];
+  }
+
+  dispose(): void {
+    this.retryDisposable?.dispose();
+    this.retryDisposable = null;
   }
 
   async ensureLoaded(token?: vscode.CancellationToken): Promise<void> {

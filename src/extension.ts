@@ -5,6 +5,7 @@ import { XOverReferenceProvider } from "./referenceProvider";
 
 export function activate(context: vscode.ExtensionContext): void {
   const index = new MappingIndex();
+  context.subscriptions.push(index);
 
   const configWatcher = vscode.workspace.createFileSystemWatcher(
     "**/cross-reference.json"
