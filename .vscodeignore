@@ -1,0 +1,24 @@
+# Source and build config
+src/**
+tsconfig.json
+
+# Dependencies (devDependencies only, no runtime deps)
+node_modules/**
+
+# Development and test
+.vscode/**
+.vscode-test/**
+**/*.test.js
+**/*.test.js.map
+out/test/**
+
+# Example and debug artifacts
+example/**
+
+# Misc
+.gitignore
+TODO.md
+*.vsix
+
+# Source maps (optional: remove to include for debugging)
+**/*.map
