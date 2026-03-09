@@ -22,19 +22,31 @@ export class MappingIndex {
   private counterpartMap = new Map<string, vscode.Location[]>();
   private fileToConfig = new Map<string, { configUri: vscode.Uri; component: string }>();
   private symbolCache = new Map<string, SymbolMap>();
+  private relevantFiles = new Set<string>();
   private configs: ParsedConfig[] = [];
   private invalidated = true;
   private rebuildPromise: Promise<void> | null = null;
 
-  async rebuild(): Promise<void> {
+  private throwIfCancelled(token?: vscode.CancellationToken): void {
+    if (token?.isCancellationRequested) {
+      this.invalidate();
+      throw new Error("cancelled");
+    }
+  }
+
+  async rebuild(token?: vscode.CancellationToken): Promise<void> {
+    this.throwIfCancelled(token);
     this.invalidated = false;
     this.counterpartMap.clear();
     this.fileToConfig.clear();
     this.symbolCache.clear();
+    this.relevantFiles.clear();
     this.configs = [];
 
     const configUris = await findConfigFiles();
+    this.throwIfCancelled(token);
     for (const configUri of configUris) {
+      this.throwIfCancelled(token);
       let content: string;
       try {
         const doc = await vscode.workspace.openTextDocument(configUri);
@@ -47,6 +59,7 @@ export class MappingIndex {
       if (!parsed) continue;
 
       this.configs.push(parsed);
+      this.relevantFiles.add(configUri.toString());
       const configDir = vscode.Uri.joinPath(configUri, "..");
       const configUriStr = configUri.toString();
       const nestedConfigDirs = getNestedConfigDirs(
@@ -75,13 +88,18 @@ export class MappingIndex {
           }
 
           const fileStr = fileUri.toString();
+          this.relevantFiles.add(fileStr);
           this.fileToConfig.set(fileStr, {
             configUri,
             component: componentKey,
           });
 
-          const symbolMap = await resolveSymbolsInFile(fileUri);
-          this.symbolCache.set(fileUri.toString(), symbolMap);
+          let symbolMap = this.symbolCache.get(fileStr);
+          if (symbolMap === undefined) {
+            this.throwIfCancelled(token);
+            symbolMap = await resolveSymbolsInFile(fileUri);
+            this.symbolCache.set(fileStr, symbolMap);
+          }
 
           const typeSymbolPath = ref.symbol;
           const typeRange = symbolMap.get(typeSymbolPath);
@@ -159,6 +177,12 @@ export class MappingIndex {
     this.invalidated = true;
   }
 
+  invalidateIfRelevant(uri: vscode.Uri): void {
+    if (this.relevantFiles.has(uri.toString())) {
+      this.invalidate();
+    }
+  }
+
   getConfigForFile(fileUri: vscode.Uri): {
     configUri: vscode.Uri;
     component: string;
@@ -179,14 +203,27 @@ export class MappingIndex {
     return this.counterpartMap.get(k) ?? [];
   }
 
-  async ensureLoaded(): Promise<void> {
+  async ensureLoaded(token?: vscode.CancellationToken): Promise<void> {
     while (this.invalidated) {
       if (this.rebuildPromise) {
-        await this.rebuildPromise;
+        const waitPromise = this.rebuildPromise;
+        if (token) {
+          await Promise.race([
+            waitPromise,
+            new Promise<never>((_, reject) => {
+              if (token.isCancellationRequested) reject(new Error("cancelled"));
+              token.onCancellationRequested(() =>
+                reject(new Error("cancelled"))
+              );
+            }),
+          ]);
+        } else {
+          await waitPromise;
+        }
         this.rebuildPromise = null;
         continue;
       }
-      this.rebuildPromise = this.rebuild();
+      this.rebuildPromise = this.rebuild(token);
       try {
         await this.rebuildPromise;
       } finally {

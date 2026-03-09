@@ -28,7 +28,7 @@ export class XOverReferenceProvider implements vscode.ReferenceProvider {
     }
     activeLookups.add(key);
     try {
-      await this.index.ensureLoaded();
+      await this.index.ensureLoaded(token);
       if (token.isCancellationRequested) return [];
 
       const fileConfig = this.index.getConfigForFile(document.uri);

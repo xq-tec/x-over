@@ -15,7 +15,9 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(configWatcher);
 
   context.subscriptions.push(
-    vscode.workspace.onDidSaveTextDocument(() => index.invalidate())
+    vscode.workspace.onDidSaveTextDocument((doc) =>
+      index.invalidateIfRelevant(doc.uri)
+    )
   );
 
   const documentSelector: vscode.DocumentSelector = [

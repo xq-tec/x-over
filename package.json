@@ -1,8 +1,8 @@
 {
   "name": "x-over",
   "displayName": "Crossover References",
-  "description": "Cross-reference between corresponding type definitions in different programming languages",
-  "version": "0.0.1",
+  "description": "Cross-references definitions between corresponding types in different programming languages",
+  "version": "0.1.0",
   "publisher": "xq-Tec",
   "repository": {
     "type": "git",
