@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 export interface ComponentRef {
   file: string;
   symbol: string;
+  discriminant?: string;
 }
 
 export interface ChildMapping {

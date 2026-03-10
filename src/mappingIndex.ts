@@ -12,7 +12,11 @@ import {
   isFileUnderConfigDir,
   isFileUnderNestedConfig,
 } from "./configScope";
-import { resolveSymbolsInFile, SymbolMap } from "./symbolResolver";
+import {
+  extractChildrenFromType,
+  resolveSymbolsInFile,
+  SymbolMap,
+} from "./symbolResolver";
 
 function key(configUri: string, component: string, symbolPath: string): string {
   return `${configUri}|${component}|${symbolPath}`;
@@ -113,12 +117,42 @@ export class MappingIndex implements vscode.Disposable {
             );
           }
 
+          let extracted: Map<string, vscode.Range> | undefined;
+          let doc: vscode.TextDocument | undefined;
+
           for (const child of children) {
             const fieldName = child[componentKey];
             if (typeof fieldName !== "string") continue;
 
             const fieldSymbolPath = `${typeSymbolPath}.${fieldName}`;
-            const fieldRange = symbolMap.get(fieldSymbolPath);
+            let fieldRange = symbolMap.get(fieldSymbolPath);
+
+            if (!fieldRange && typeRange) {
+              if (!doc) {
+                doc = await vscode.workspace.openTextDocument(fileUri);
+              }
+              const useParserFallback =
+                doc.languageId === "typescript" ||
+                doc.languageId === "javascript";
+              if (useParserFallback) {
+                if (!extracted) {
+                  extracted = extractChildrenFromType(
+                    doc,
+                    typeRange.range,
+                    ref.discriminant
+                  );
+                }
+                const propRange = extracted.get(fieldName);
+                if (propRange) {
+                  fieldRange = {
+                    range: propRange,
+                    selectionRange: propRange,
+                  };
+                  symbolMap.set(fieldSymbolPath, fieldRange);
+                }
+              }
+            }
+
             if (fieldRange) {
               const childKey = `${componentKey}:${fieldSymbolPath}`;
               locationsByComponent.set(

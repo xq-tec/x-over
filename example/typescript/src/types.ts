@@ -16,3 +16,15 @@ export function createUser(id: number, name: string, companyEmail: string): User
 export function getUserName(user: UserData): string {
   return user.name;
 }
+
+export type CompanyData = {
+  id: number;
+  name: string;
+}
+
+export type PlayerCommand =
+  | { command: "start" }
+  | { command: "stop" }
+  | { command: "seekToStart" }
+  | { command: "seekToTime", time: number }
+  ;

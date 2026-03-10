@@ -20,6 +20,9 @@
   ],
   "main": "./out/extension.js",
   "contributes": {},
+  "dependencies": {
+    "typescript": "^5.3.0"
+  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",

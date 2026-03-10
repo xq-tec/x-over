@@ -24,6 +24,59 @@
           "@ts": "companyEmail"
         }
       ]
+    },
+    {
+      "@rust": {
+        "file": "rust/src/types.rs",
+        "symbol": "CompanyData"
+      },
+      "@ts": {
+        "file": "typescript/src/types.ts",
+        "symbol": "CompanyData"
+      },
+      "children": [
+        {
+          "@rust": "id",
+          "@ts": "id"
+        },
+        {
+          "@rust": "name",
+          "@ts": "name"
+        }
+      ]
+    },
+    {
+      "@rust": {
+        "file": "rust/src/types.rs",
+        "symbol": "PlayerCommand"
+      },
+      "@ts": {
+        "file": "typescript/src/types.ts",
+        "symbol": "PlayerCommand",
+        "discriminant": "command"
+      },
+      "children": [
+        {
+          "@rust": "Start",
+          "@ts": "start"
+        },
+        {
+          "@rust": "Stop",
+          "@ts": "stop"
+        },
+        {
+          "@rust": "SeekToStart",
+          "@ts": "seekToStart"
+        },
+        {
+          "@rust": "SeekToTime",
+          "@ts": "seekToTime"
+        },
+        {
+          "@rust": "SeekToTime.time",
+          "@ts": "seekToTime.time"
+        }
+      ]
     }
   ]
 }
